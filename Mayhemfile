@@ -1,5 +1,5 @@
 project: rnshah9/link-grammar
-target: link-grammar
+target: link-parser
 tests: null
 
 cmds:
