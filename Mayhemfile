@@ -1,6 +1,5 @@
-project: rnshah9/link-grammar
+project: link-grammar
 target: link-parser
-tests: null
 
 cmds:
   - cmd: /repo/link-parser/link-parser
