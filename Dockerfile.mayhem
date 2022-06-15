@@ -17,5 +17,5 @@ RUN ldd /repo/link-parser/link-parser | tr -s '[:blank:]' '\n' | grep '^/' | xar
 FROM ubuntu:20.04 as package
 
 COPY --from=builder /deps /deps
-COPY --from=builder /repo/link-parser/link-parser /repo/link-parser/link-parser
+COPY --from=builder /repo /repo
 ENV LD_LIBRARY_PATH=/deps

@@ -3,3 +3,4 @@ target: link-parser
 
 cmds:
   - cmd: /repo/link-parser/link-parser
+
