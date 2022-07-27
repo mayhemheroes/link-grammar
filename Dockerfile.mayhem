@@ -3,19 +3,12 @@ FROM --platform=linux/amd64 ubuntu:20.04 as builder
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y automake libtool pkg-config build-essential autoconf-archive bison flex
 
-ADD . /repo
+COPY . /repo
 WORKDIR /repo
 RUN ./autogen.sh
-RUN ./configure
+RUN ./configure --prefix=/install
 RUN make -j8
-ENV LD_LIBRARY_PATH=/repo/link-grammar/.libs
-RUN cp /repo/link-parser/.libs/link-parser /repo/link-parser
-
-RUN mkdir -p /deps
-RUN ldd /repo/link-parser/link-parser | tr -s '[:blank:]' '\n' | grep '^/' | xargs -I % sh -c 'cp % /deps;'
+RUN make install
 
 FROM ubuntu:20.04 as package
-
-COPY --from=builder /deps /deps
-COPY --from=builder /repo /repo
-ENV LD_LIBRARY_PATH=/deps
+COPY --from=builder /install /install

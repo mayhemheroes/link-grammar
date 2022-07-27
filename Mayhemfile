@@ -1,9 +1,8 @@
 project: link-grammar
 target: link-parser
-image: ghcr.io/rnshah9/playground:link-grammar
 
 cmds:
-  - cmd: /repo/link-parser/link-parser
+  - cmd: /install/bin/link-parser
     env:
       DISABLE_SMOKETEST: '1'
 
