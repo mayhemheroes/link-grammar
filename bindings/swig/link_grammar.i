@@ -22,6 +22,8 @@
 %ignore parse_options_get_max_memory(Parse_Options opts);
 // End of ignored API calls.
 
+%ignore lg_library_failure_hook;     /* Not supported. */
+
 %nodefaultdtor lg_errinfo;
 
 #define link_public_api(x) x
@@ -228,7 +230,14 @@ static void PythonCallBack(lg_errinfo *lge, void *func_and_data)
    PyObject *data = PyTuple_GetItem((PyObject *)func_and_data, 1);
 
    PyObject *args = Py_BuildValue("OO", pylge, data);
-   PyObject *rc = PyEval_CallObject(func, args); /* Py LG error cb. */
+
+   /* Call Python LG error callback. */
+   PyObject *rc =
+#if PY_VERSION_HEX >= 0x03090000 // PyEval_CallObject() got deprecated on 3.9
+       PyObject_CallObject(func, args);
+#else
+       PyEval_CallObject(func, args);
+#endif
 
    Py_DECREF(pylge);
    Py_DECREF(args);

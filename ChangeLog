@@ -1,7 +1,20 @@
-Version 5.10.5 (XXX 2022)
+Version 5.11.0 (XXX 2022)
+ * Prototype support for dictionary in the AtomSpace.
+ * English dict: assorted missing nouns, verbs. #1289
+ * Performance improvements. #1309
+ * Fix Windows build break in 5.10.4, 5.10.5 fixed in #1313
+ * Fix "amy" language #1312
+ * Fix multilib systems, e.g. elf32-i386 #1314
+ * Corrected grapheme support for random morpheme sampling. #1315
+ * Thai updates #1322
+ * Punctuation fixes #1331
+
+Version 5.10.5 (17 June 2022)
  * Updated Docker files. #1288
  * English dict: broader handling of ellipsis.
  * Updated Thai dicts: #1292, #1294
+ * Fix Thai regex's to work even with basic C++ regex lib. #1297
+ * Performance improvements. #1298
 
 Version 5.10.4 (4 March 2022)
  * English dict: fix relative clause, per mailing list.

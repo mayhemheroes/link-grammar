@@ -1,6 +1,6 @@
 Link Grammar Parser
 ===================
-***Version 5.10.5***
+***Version 5.11.0***
 
 ![Main](https://github.com/opencog/link-grammar/actions/workflows/main.yml/badge.svg)
 ![node.js](https://github.com/opencog/link-grammar/actions/workflows/bindings-js.yml/badge.svg)
@@ -132,7 +132,8 @@ suffixes that carry all of the syntactic structure, and not the stems.
 The Russian lexis is
 [documented here](https://www.abisource.com/projects/link-grammar/russian/doc/).
 
-And here is an example in Thai:
+The Thai dictionary is now fully developed, effectively covering the
+entire language.  An example in Thai:
 ```
 linkparser> นายกรัฐมนตรี ขึ้น กล่าว สุนทรพจน์
 	Linkage 1, cost vector = (UNUSED=0 DIS= 2.00 LEN=2)
@@ -163,11 +164,12 @@ Found 1 linkage (1 had no P.P. violations)
 LEFT-WALL เมื่อวานนี้.n[!] มี.ve[!] คน.n[!] มา.x[!] ติดต่อ.v[!] คุณ.pr[!] ครับ.pt[!]
 ```
 
-A full documentation for the input formats can be
+Full documentation for the Thai dictionary can be
 [found here](th/INPUT_FORMATS.md).
 
-Moreover, it accepts LST20 tagsets for POS and named entities to bridge
-the gap between fundamental NLP tools and the Link Parser. For example:
+The Thai dictionary accepts LST20 tagsets for POS and named entities,
+to bridge the gap between fundamental NLP tools and the Link Parser.
+For example:
 
 ```
 linkparser> linkparser> วันที่_25_ธันวาคม@DTM ของ@PS ทุก@AJ ปี@NN เป็น@VV วัน@NN คริสต์มาส@NN
@@ -284,7 +286,7 @@ corruption of the dataset during download, and to help ensure that
 no malicious changes were made to the code internals by third
 parties. The signatures can be checked with the gpg command:
 
-`gpg --verify link-grammar-5.10.4.tar.gz.asc`
+`gpg --verify link-grammar-5.10.5.tar.gz.asc`
 
 which should generate output identical to (except for the date):
 ```
@@ -299,7 +301,7 @@ verify the check-sums, issue `md5sum -c MD5SUM` at the command line.
 Tags in `git` can be verified by performing the following:
 ```
 gpg --recv-keys --keyserver keyserver.ubuntu.com EB6AA534E0C0651C
-git tag -v link-grammar-5.10.4
+git tag -v link-grammar-5.10.5
 ```
 
 
@@ -1100,7 +1102,7 @@ Type Theory
 -----------
 Link Grammar can be understood in the context of type theory.
 A simple introduction to type theory can be found in chapter 1
-of the [HoTT book](https://homotopytypetheory.org/book/).<br>
+of the [HoTT book](https://homotopytypetheory.org/book/).
 This book is freely available online and strongly recommended if
 you are interested in types.
 
@@ -1109,7 +1111,9 @@ The nice thing about link-grammar is that the link types form a type
 system that is much easier to use and comprehend than that of categorial
 grammar, and yet can be directly converted to that system!  That is,
 link-grammar is completely compatible with categorial grammar, and is
-easier-to-use.
+easier-to-use. See the paper
+[<i>"Combinatory Categorial Grammar and Link Grammar are Equivalent"</i>](https://github.com/opencog/atomspace/raw/master/opencog/sheaf/docs/ccg.pdf)
+for details.
 
 The foundational LG papers make comments to this effect; however, see
 also work by Bob Coecke on category theory and grammar.  Coecke's

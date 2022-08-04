@@ -4,7 +4,7 @@
 # accordingly.
 # Don't end the URLs with a slash even if it appears in the official address,
 # because we may append a component. Also, they cannot include "!".
-AC_INIT([link-grammar],[5.10.4],[https://github.com/opencog/link-grammar],[],
+AC_INIT([link-grammar],[5.11.0],[https://github.com/opencog/link-grammar],[],
 		  [https://www.abisource.com/projects/link-grammar])
 
 dnl Check whether we want to set defaults for CFLAGS and CXXFLAGS
@@ -33,11 +33,11 @@ dnl     4a) Increment when removing or changing interfaces.
 LINK_MAJOR_VERSION=5
 dnl     4a) 5) Increment when adding interfaces.
 dnl     6) Set to zero when removing or changing interfaces.
-LINK_MINOR_VERSION=10
+LINK_MINOR_VERSION=11
 dnl     3) Increment when interfaces not changed at all,
 dnl        only bug fixes or internal changes made.
 dnl     4b) Set to zero when adding, removing or changing interfaces.
-LINK_MICRO_VERSION=4
+LINK_MICRO_VERSION=0
 dnl
 dnl     Set this too
 MAJOR_VERSION_PLUS_MINOR_VERSION=`expr $LINK_MAJOR_VERSION + $LINK_MINOR_VERSION`
@@ -66,7 +66,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])], [AC_SUBST([AM_DEFAULT_VERB
 
 dnl "Undefined AX_ macro" is checked in autogen.sh, so if this message
 dnl is changed here it should be changed there too.
-m4_pattern_forbid([^AX_(COMPILER_VENDOR|TLS|AX_CHECK_ZLIB|PKG_SWIG)\b],
+m4_pattern_forbid([^AX_(COMPILER_VENDOR|TLS|PKG_SWIG)\b],
 	[Undefined AX_ macro. Please install the "autoconf-archive" package.])
 m4_pattern_forbid([^PKG_],
 	[Undefined PKG_ macro. Please install the "pkg-config"
@@ -217,7 +217,7 @@ CXXFLAGS="${CXXFLAGS} -Wall"
 # GNU, but do NOT turn on POSIX.
 
 CFLAGS="-std=c11 -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -D_ISOC11_SOURCE ${CFLAG_VISIBILITY} ${CFLAGS}"
-CXXFLAGS="-std=c++11 ${CFLAG_VISIBILITY} ${CXXFLAGS}"
+CXXFLAGS="-std=c++17 ${CFLAG_VISIBILITY} ${CXXFLAGS}"
 
 if test x${native_win32} = xyes; then
 	# We need the shlwapi for PathRemoveFileSpecA().
@@ -362,7 +362,7 @@ AC_ARG_ENABLE( sat-solver,
 	   enable_sat_solver=yes
 	fi], [enable_sat_solver=no])
 
-if test "x$enable_sat_solver" = xyes; then
+AS_IF([test "x$enable_sat_solver" = xyes], [
 	# The sat-solver code is in C++; so the link-grammar library should now
 	# directly require libstdc++ instead of indirectly depend on its
 	# availability via the minisat2 library.
@@ -374,17 +374,7 @@ if test "x$enable_sat_solver" = xyes; then
 	AC_CHECK_HEADER([stdio.h],,
 		[AC_MSG_ERROR([C++ compiler not found; it is needed for the SAT parser])])
 
-	dnl 1. Abort and notify if no zlib.h. 2. Adapt for non-standard location.
-	AC_MSG_NOTICE([The minisat2 headers include zlib.h])
-	dnl The bundled library doesn't actually need -lz
-	AX_CHECK_ZLIB([ZLIB_CPPFLAGS="-isystem $ZLIB_HOME/include"],
-		[AC_MSG_NOTICE([No zlib library found - not building sat solver])
-		enable_sat_solver=no])
-fi
-
-# If zlib not found, then don't continue with minisat.
-if test "x$enable_sat_solver" = xyes; then
-	test "x$ZLIB_CPPFLAGS" = "x-isystem /usr/include" && ZLIB_CPPFLAGS=
+	PKG_CHECK_MODULES([ZLIB], [zlib])
 
 	CPPFLAGS_SAVE="$CPPFLAGS"
 
@@ -396,7 +386,7 @@ if test "x$enable_sat_solver" = xyes; then
 		dnl FIXME: Allow using --with-minisat2=DIR
 		dnl and/or specifying specific include/library locations.
 		minisat_headers="-isystem /usr/include/minisat"
-		CPPFLAGS="$CPPFLAGS $minisat_headers $ZLIB_CPPFLAGS"
+		CPPFLAGS="$CPPFLAGS $minisat_headers $ZLIB_CFLAGS"
 
 		AC_CHECK_LIB(minisat, main, [MINISAT_LIBS=-lminisat],
 			[ use_minisat_bundled_library=yes ]
@@ -440,8 +430,7 @@ if test "x$enable_sat_solver" = xyes; then
 	AC_LANG([C])
 	CPPFLAGS="$CPPFLAGS_SAVE"
 	AC_DEFINE(USE_SAT_SOLVER, 1, [Define for compilation])
-	AC_SUBST(ZLIB_CPPFLAGS)
-fi
+])
 
 AM_CONDITIONAL(LIBMINISAT_BUNDLED, test -n "$use_minisat_bundled_library")
 AM_CONDITIONAL(WITH_SAT_SOLVER, test "x$enable_sat_solver" = xyes)
@@ -487,6 +476,28 @@ fi
 AM_CONDITIONAL(HAVE_SQLITE3, test "${SQLiteFound}" = yes)
 AC_SUBST(SQLITE3_LIBS)
 AC_SUBST(SQLITE3_CFLAGS)
+
+# ====================================================================
+# The AtomSpace dictionary backend
+# TODO - use pkg_config for find the libs.
+# TODO - check for opencog/nlp/types/atom_types.h
+# TODO - do NOT specify -lpersist-rocks -lpersist-cog  here,
+#        they need to be dynmically loaded instead (for proper
+#        initialization of the shared library ctors these contain).
+#        Alternately, if they are found, then wrap them with
+#        "-Wl,--no-as-needed"
+
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADER([opencog/atomspace/AtomSpace.h], [AtomSpaceFound=yes], AtomSpaceFound=no)
+AC_LANG_POP()
+
+AM_CONDITIONAL(HAVE_ATOMSPACE, test x${AtomSpaceFound} = xyes)
+
+if test x"${AtomSpaceFound}" = xyes; then
+	AC_DEFINE(HAVE_ATOMESE, 1, [Define for compilation])
+	ATOMSPACE_LIBS="-lnlp-types -lstorage-types -lsexpr -Wl,--no-as-needed -lpersist-rocks -lpersist-cog -lpersist-file -Wl,--as-needed -lpersist -latomspace -L/usr/local/lib/opencog/"
+fi
+AC_SUBST(ATOMSPACE_LIBS)
 
 # ====================================================================
 # Set Default Spell Checker settings
@@ -840,8 +851,21 @@ define([AC_MSG_ERROR],
 PythonFound=no
 if test "x$enable_python_bindings" = xyes; then
 	AM_PATH_PYTHON(PYTHON3_REQUIRED, [PythonFound=yes])
-	AX_PYTHON_DEVEL(>= 'PYTHON3_REQUIRED')
-	test -n "$lg_python_unusable" && PythonFound=no
+	AX_PYTHON_DEVEL()
+	AX_COMPARE_VERSION($PYTHON_VERSION, [ge], 'PYTHON3_REQUIRED',,
+							 [lg_python_unusable=yes])
+	if test -n "$lg_python_unusable"; then
+		dnl Use the message from AX_PYTHON_DEVEL, but with " instead of ''
+		dnl so (for debug) we can know it is from here.
+		AC_MSG_NOTICE([
+this package requires Python >= ]'PYTHON3_REQUIRED'[
+If you have it installed, but it isn't the default Python
+interpreter in your system path, please pass the PYTHON_VERSION
+variable to configure. See "configure --help" for reference.
+		])
+		PythonFound=no
+		PYTHON_VERSION= # Avoid confusion
+	fi
 	if test x$PythonFound = xyes; then
 		PythonFound=$PYTHON_VERSION
 		lg_display_PYTHON=" ($PYTHON)"
@@ -1044,6 +1068,7 @@ data/th/Makefile
 data/th/words/Makefile
 data/tr/Makefile
 data/vn/Makefile
+data/demo-atomese/Makefile
 data/demo-sql/Makefile
 man/Makefile
 ])
@@ -1052,6 +1077,7 @@ AC_OUTPUT
 # ====================================================================
 lglibs=`AS_ECHO(m4_normalize(["$LIBEDIT_LIBS $HUNSPELL_LIBS $ASPELL_LIBS
 										$REGEX_LIBS $MINISAT_LIBS $SQLITE3_LIBS
+										$ATOMSPACE_LIBS
 										$LIBS"])) | ${SED} 's/  */ /g'`
 test -n "$regexlib_cxx" && REGEX_LIBS='C++'
 
@@ -1077,6 +1103,7 @@ $PACKAGE-$VERSION  build configuration settings
 	HunSpell dictionary location:   ${HunSpellDictDir}${HunSpellDictDir_status}
 	Boolean SAT parser:             ${enable_sat_solver}${use_minisat_bundled_library}
 	SQLite-backed dictionary:       ${SQLiteFound}
+	AtomSpace-backed dictionary:    ${AtomSpaceFound}
 	Definitions:                    ${LG_DEFS}
 	Libraries:                      ${lglibs}
 ])"

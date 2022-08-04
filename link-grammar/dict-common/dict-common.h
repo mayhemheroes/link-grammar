@@ -18,6 +18,7 @@
 #include "connectors.h"                 // ConTable
 #include "dict-defines.h"
 #include "dict-structures.h"
+#include "dict-ram/dict-ram.h"
 #include "memory-pool.h"                // Pool_desc
 #include "utilities.h"                  // locale_t
 
@@ -72,10 +73,16 @@ struct Afdict_class_struct
 #define MAX_TOKEN_LENGTH 250     /* Maximum number of chars in a token */
 #define IDIOM_LINK_SZ 16
 
-#ifdef HAVE_SQLITE3
-#define IS_DB_DICT(dict) (NULL != dict->db_handle)
+#if defined HAVE_SQLITE3 || defined HAVE_ATOMESE
+#define IS_DYNAMIC_DICT(dict) dict->dynamic_lookup
 #else
-#define IS_DB_DICT(dict) false
+#define IS_DYNAMIC_DICT(dict) false
+#endif /* HAVE_SQLITE3 or HAVE_ATOMESE */
+
+#ifdef HAVE_SQLITE3
+#define IS_SQL_DICT(dict) (NULL != dict->db_handle)
+#else
+#define IS_SQL_DICT(dict) false
 #endif /* HAVE_SQLITE3 */
 
 /* "#define name value" */
@@ -85,7 +92,7 @@ typedef struct
 	const char **name;
 	const char **value;
 	unsigned int size;                 /* Allocated value array size */
-} define_s;
+} dfine_s;
 
 typedef struct
 {
@@ -106,13 +113,14 @@ struct Dictionary_s
 	locale_t     lctype;    /* Locale argument for the *_l() functions */
 	int          num_entries;
 	float default_max_disjunct_cost;
-	define_s     define;    /* Name-value definitions */
+	dfine_s      dfine;    /* Name-value definitions */
 
 	bool         use_unknown_word;
 	bool         unknown_word_defined;
 	bool         left_wall_defined;
 	bool         right_wall_defined;
 	bool         shuffle_linkages;
+	bool         dynamic_lookup;
 
 	Dialect *dialect;                  /* "4.0.dialect" info */
 	expression_tag dialect_tag;        /* Expression dialect tag info */
@@ -132,12 +140,16 @@ struct Dictionary_s
 #ifdef HAVE_SQLITE3
 	void *          db_handle;         /* database handle */
 #endif
+#ifdef HAVE_ATOMESE
+	void *          as_server;         /* cogserver connection */
+#endif
 
 	void (*insert_entry)(Dictionary, Dict_node *, int);
 	Dict_node* (*lookup_list)(Dictionary, const char*);
 	Dict_node* (*lookup_wild)(Dictionary, const char*);
 	void (*free_lookup)(Dictionary, Dict_node*);
-	bool (*lookup)(Dictionary, const char*);
+	bool (*exists_lookup)(Dictionary, const char*);
+	void (*clear_cache)(Dictionary);
 	void (*close)(Dictionary);
 
 	pp_knowledge  * base_knowledge;    /* Core post-processing rules */
@@ -170,10 +182,6 @@ struct Dictionary_s
 bool is_stem(const char *);
 bool is_wall(const char *);
 bool is_macro(const char *);
-
-Exp *Exp_create(Pool_desc *);
-Exp *Exp_create_dup(Pool_desc *, Exp *);
-Exp *make_unary_node(Pool_desc *, Exp *);
 
 bool dictionary_generation_request(const Dictionary);
 
