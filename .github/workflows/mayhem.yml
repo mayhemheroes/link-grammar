@@ -51,7 +51,8 @@ jobs:
       fail-fast: false
       matrix:
         mayhemfile:
-          - mayhem/Mayhemfile
+          - mayhem/Mayhemfile_link-parser
+          - mayhem/Mayhemfile_string_set_add
 
     steps:
       - uses: actions/checkout@v2

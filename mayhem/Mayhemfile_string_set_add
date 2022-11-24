@@ -1,0 +1,7 @@
+project: link-grammar
+target: string-set-add
+
+cmds:
+  - cmd: /fuzz_string_set_add
+    libfuzzer: true
+
