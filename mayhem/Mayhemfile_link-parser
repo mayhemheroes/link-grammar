@@ -1,0 +1,8 @@
+project: link-grammar
+target: link-parser
+
+cmds:
+  - cmd: /install/bin/link-parser
+    env:
+      DISABLE_SMOKETEST: '1'
+
