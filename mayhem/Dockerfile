@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 ubuntu:20.04 as builder
+FROM --platform=linux/amd64 ubuntu:22.04 AS builder
 
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y automake libtool pkg-config build-essential autoconf-archive bison flex clang
@@ -14,6 +14,6 @@ RUN sed -i 's/const char \* string_set_add/extern "C" const char \* string_set_a
 RUN sed -i 's/void         string_set_delete/extern "C" void string_set_delete/' /repo/link-grammar/string-set.h
 RUN clang++ /repo/mayhem/fuzz_string_set_add.cpp -o /fuzz -fsanitize=fuzzer,address -DHAVE_LOCALE_T_IN_LOCALE_H=1 -I /repo/link-grammar/ -I /repo/ -L /install/lib/ -l:liblink-grammar.a 
 
-FROM ubuntu:20.04 as package
+FROM ubuntu:22.04 AS package
 COPY --from=builder /install /install
 COPY --from=builder /fuzz /fuzz_string_set_add
